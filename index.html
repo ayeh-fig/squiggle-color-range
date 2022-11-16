@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+
+<meta charset='utf-8'>
+<script src='chroma.js'></script>
+
+<style>
+  body {
+    font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  }
+  .text {
+    font-size: 32px;
+    padding: 20px;
+  }
+
+  #highlight{
+    display: inline-block;
+    position: relative;
+  }
+
+  #highlight:after {
+    content: '';
+    position: absolute;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    right: 0;
+  }
+
+  #highlight_current{
+    display: inline-block;
+    position: relative;
+  }
+
+  #highlight_current:after {
+    content: '';
+    position: absolute;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    background: rgba(24, 145, 251, 0.3);
+  }
+
+  #ui {
+    margin-top: 20px;
+  }
+
+</style>
+
+<style id='styleDefinition'></style>
+
+<p>Current</p>
+<div class='text'>
+  The quick brown fox <span id='highlight_current'>jumps over</span> the lazy dog.
+</div>
+
+<p>Proposed</p>
+<div class='text'>
+  The quick brown fox <span id='highlight'>jumps over</span> the lazy dog.
+</div>
+
+<div id='ui'>
+  Text color: <input id='textColorPicker' type='color'>
+  Bk color: <input id='bkColorPicker' type='color'>
+  <!-- Base blue: <input id='blueColorPicker' type='color'> -->
+
+  <button id='setToBlackOnWhite'>Set to black on white</button> 
+  <button id='setToBlackOnBlue'>Set to black on blue</button> 
+  <button id='setToWhiteOnBlue'>Set to white on blue</button> 
+</div>
+
+<script>
+  let bkColor = chroma('#78BCF5')
+  let textColor = chroma('#000000')
+  let blue = chroma('#78BCF5')
+  let proposedSelection = true
+  let selectionColor
+ 
+  function updateAfterColorsChanged() {
+    // Read the colours from pickers into JS variables
+    textColor = chroma(document.querySelector('#textColorPicker').value)
+    bkColor = chroma(document.querySelector('#bkColorPicker').value)
+
+    // Set the colours onto the text
+    document.querySelectorAll('.text')[0].style.color = textColor.hex()
+    document.querySelectorAll('.text')[0].style.background = bkColor.hex()
+    document.querySelectorAll('.text')[1].style.color = textColor.hex()
+    document.querySelectorAll('.text')[1].style.background = bkColor.hex()
+    // Calculate the highlight colour
+
+    // Default to the Figma blue today
+    selectionColor = chroma('#1891FB').alpha(.3) // current Figma blue selection
+
+    // If the distance between background colour and blue in LAB is close, then switch to white
+    // let distance = chroma.distance(bkColor, chroma(blue), 'lab')
+    // if (distance < 45) {
+    //   selectionColor = chroma('#ffffff').alpha(.3) // red selection at 50% opacity
+    // }
+
+    //|| chroma(bkColor).get('hsv.h') < 180 && chroma(bkColor).get('hsv.h') > 110 && chroma(bkColor).get('hsv.s') > 0.12 && chroma(bkColor).get('hsv.v') > 0.4 && chroma(bkColor).get('hsv.v') < 0.8
+
+    //Text selection color changes based on a custom hsv range
+    if(proposedSelection){
+      if(chroma(bkColor).get('hsv.h') > 180 && chroma(bkColor).get('hsv.h')< 280 && chroma(bkColor).get('hsv.s') > 0.38 && chroma(bkColor).get('hsv.v') > 0.4 || chroma(bkColor).get('hsv.h') <= 180 && chroma(bkColor).get('hsv.h') > 80 && chroma(bkColor).get('hsv.s') > 0.38 && chroma(bkColor).get('hsv.v') < 0.8 && chroma(bkColor).get('hsv.v') > 0.4){
+      selectionColor = chroma('#ffffff').alpha(.3) // white selection at 30% opacity
+    }
+
+    
+    }
+
+    // if(chroma(bkColor).get('hsv.s') > 0.25 && chroma(bkColor).get('hsv.v') > 0.6){
+    //   selectionColor = chroma('#ffffff').alpha(.3) // white selection at 30% opacity
+    // }
+      
+    // Update the highlight colour
+
+    document.querySelector('#styleDefinition').innerHTML = `#highlight:after { background: ${selectionColor.hex()}; }`
+  }
+
+  function setToBlackOnWhite() {
+    document.querySelector('#textColorPicker').value = '#000000'
+    document.querySelector('#bkColorPicker').value = '#ffffff'
+    updateAfterColorsChanged()
+  }
+
+  function setToBlackOnBlue() {
+    document.querySelector('#textColorPicker').value = '#000000'
+    document.querySelector('#bkColorPicker').value = blue
+    updateAfterColorsChanged()
+  }
+
+
+  function setToWhiteOnBlue() {
+    document.querySelector('#textColorPicker').value = '#FFFFFF'
+    document.querySelector('#bkColorPicker').value = '#3191FF'
+    updateAfterColorsChanged()
+  }
+
+
+
+
+  function main() {
+    // Set the initial value of colour pickers
+    document.querySelector('#textColorPicker').value = textColor.hex()
+    document.querySelector('#bkColorPicker').value = bkColor.hex()
+
+    // Make those listen to changes and invoke the function
+    document.querySelector('#textColorPicker').addEventListener('input', updateAfterColorsChanged)
+    document.querySelector('#bkColorPicker').addEventListener('input', updateAfterColorsChanged)
+
+    document.querySelector('#setToBlackOnWhite').addEventListener('click', setToBlackOnWhite)
+    document.querySelector('#setToBlackOnBlue').addEventListener('click', setToBlackOnBlue)
+    document.querySelector('#setToWhiteOnBlue').addEventListener('click', setToWhiteOnBlue)
+
+    updateAfterColorsChanged()
+  }
+
+  main()
+</script>
